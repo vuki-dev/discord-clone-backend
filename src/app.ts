@@ -2,10 +2,16 @@ import express from "express";
 import * as http from "http";
 import { Server } from "socket.io";
 import {messageRouter} from "./routes/messagesRoutes";
+import cors from "cors";
+import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
 
 const app = express()
 const server = http.createServer(app);
 
+app.use(cors());
+app.use(bodyParser.json());
+app.use(cookieParser());
 
 const io = new Server(server, {
   cors: {

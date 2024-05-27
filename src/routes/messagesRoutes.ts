@@ -1,9 +1,10 @@
-import express from "express";
+import { Router, Request, Response } from "express";
 
-const messageRouter = express.Router();
+const router = Router();
 
-// module.exports = {
-//     messageRouter
-// }
+router.post('/', (req: Request, res: Response) => {
+    console.log(req.cookies);
+    res.json('Hello d-clone!');
+  });
 
-export {messageRouter}
+export {router as messageRouter}
