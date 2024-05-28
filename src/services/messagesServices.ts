@@ -18,3 +18,25 @@ export const sendMessage = async (
     });
   });
 };
+
+export const getMessages = async (cursor: string, channelId: string, MESSAGES_BATCH: number) => {
+    const query = `SELECT messages.*
+    FROM messages
+    WHERE messages.channel_id = ?
+    ${cursor ? "AND messages.id < ?" : ""}
+    ORDER BY messages.created_at DESC
+    LIMIT ? ${cursor ? "OFFSET 1" : ""}
+    `
+    const values = cursor ? [channelId, cursor, MESSAGES_BATCH] : [channelId, MESSAGES_BATCH];
+
+    return await new Promise((res, rej)=>{
+        db.query(query, values, (err, result) => {
+            if(err){
+                rej(err)
+            } else {
+                res(JSON.parse(JSON.stringify(result)))
+            }
+        })
+    })
+
+}

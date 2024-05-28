@@ -2,7 +2,43 @@ import { Response, Request } from "express";
 import { getCurrentUser } from "../controllers/userControllers";
 import { getServerWithMembers } from "../services/serverServices";
 import { getChannel } from "../services/channelServices";
-import { sendMessage } from "../services/messagesServices";
+import { getMessages, sendMessage } from "../services/messagesServices";
+
+const MESSAGES_BATCH = 10;
+
+export const getMessagesRequest = async (req: Request, res: Response) => {
+    try {
+        const token = req.headers.authorization?.split(" ")[1];
+
+        if (!token) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const user = await getCurrentUser(token);
+
+        const cursor = req.query.cursor as string;
+        const channelId = req.query.channelId as string;
+
+        if (!channelId) {
+            return res.status(400).json({ error: "Channel ID is missing" });
+        }
+      
+        let messages: any = [];
+
+        messages = await getMessages(cursor as string, channelId, MESSAGES_BATCH)
+
+        let nextCursor = null;
+
+        if(messages.length === MESSAGES_BATCH){
+            nextCursor = messages[MESSAGES_BATCH - 1].id;
+        }
+
+        return res.status(200).json({items: messages, nextCursor})
+    } catch (err) {
+        console.log("[MESSAGES_GET]", err)
+        return res.status(500).json({message: "Internal Error"})
+    }
+}
 
 export const sendMessageRequest = async (req: Request, res: Response) => {
   try {

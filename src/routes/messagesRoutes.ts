@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { sendMessageRequest } from "../controllers/messagesControllers";
+import { getMessagesRequest, sendMessageRequest } from "../controllers/messagesControllers";
 
 const router = Router();
 
-router.post("/", sendMessageRequest);
+router.get('/', getMessagesRequest);
+router.post("/send-message", sendMessageRequest);
 
 export { router as messageRouter };
