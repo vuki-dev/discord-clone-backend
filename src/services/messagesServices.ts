@@ -1,5 +1,5 @@
 import db from "../db/dbConfig";
-import { MemberType } from "../utils/types";
+import { MemberType, MessageType } from "../utils/types";
 import { getMember } from "./membersServices";
 import { RowDataPacket } from "mysql2";
 
@@ -53,4 +53,61 @@ export const getMessages = async (cursor: string, channelId: string, MESSAGES_BA
         })
     })
 
+}
+
+
+export const getSingleMessage = async (messageId: string, channelId: string) => {
+    const query = `SELECT messages.*
+    FROM messages
+    WHERE messages.id = ? AND messages.channel_id = ?`
+
+    const message: MessageType = await new Promise((res, rej)=>{
+        db.query<MessageType[] & RowDataPacket[]>(query, [messageId, channelId], async (err, result) => {
+            if(err){
+                rej(err)
+            } else {
+                res(JSON.parse(JSON.stringify(result[0])));
+            }
+        })
+    })
+
+    if(!message){
+        return null
+    }
+
+    message.member = await getMember(message.member_id) as MemberType;
+
+    return message;
+}   
+
+export const editMessage = async (content: string, messageId: string, channelId: string) => {
+    const query = `UPDATE messages
+    SET content = ?
+    WHERE id = ? AND channel_id = ?`;
+
+    return await new Promise((res, rej)=>{
+        db.query(query, [content, messageId, channelId], (err, result) => {
+            if(err){
+                rej(err);
+            } else {
+                res(result);
+            }
+        })
+    })
+}
+
+export const deleteMessage = async (messageId: string, channelId: string) => {
+    const query = `UPDATE messages
+    SET content = 'This message has been deleted', file_url = NULL, deleted = 1
+    WHERE id = ? AND channel_id = ?`;
+
+    return await new Promise((res, rej)=>{
+        db.query(query, [messageId, channelId], (err, result) => {
+            if(err){
+                rej(err);
+            } else {
+                res(result);
+            }
+        })
+    })
 }

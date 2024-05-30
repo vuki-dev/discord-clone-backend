@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { deleteMessageRequest, editMessageRequest, getMessagesRequest, sendMessageRequest } from "../controllers/messagesControllers";
+import { editOrDeleteMessageRequest, getMessagesRequest, sendMessageRequest } from "../controllers/messagesControllers";
 
 const router = Router();
 
 router.get('/', getMessagesRequest);
 router.post("/send-message", sendMessageRequest);
-router.patch("/:id", editMessageRequest);
-router.delete("/:id", deleteMessageRequest);
+router.patch("/:id", editOrDeleteMessageRequest);
+router.delete("/:id", editOrDeleteMessageRequest);
 
 export { router as messageRouter };

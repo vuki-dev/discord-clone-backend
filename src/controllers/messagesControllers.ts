@@ -2,7 +2,8 @@ import { Response, Request } from "express";
 import { getCurrentUser } from "../controllers/userControllers";
 import { getServerWithMembers } from "../services/serverServices";
 import { getChannel } from "../services/channelServices";
-import { getMessages, sendMessage } from "../services/messagesServices";
+import { deleteMessage, editMessage, getMessages, getSingleMessage, sendMessage } from "../services/messagesServices";
+import { MemberRole } from "../utils/types";
 
 const MESSAGES_BATCH = 10;
 
@@ -98,7 +99,8 @@ export const sendMessageRequest = async (req: Request, res: Response) => {
   }
 };
 
-export const editMessageRequest = async (req: Request, res: Response) => {
+export const editOrDeleteMessageRequest = async (req: Request, res: Response) => {
+  console.log(req.method)
   try {
     const token = req.headers.authorization?.split(" ")[1];
 
@@ -119,11 +121,60 @@ export const editMessageRequest = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Channel ID is missing" });
     }
 
-    return res.json("hello patch");
+    const server = await getServerWithMembers(serverId as string, user.id);
+
+    if (!server) {
+      return res.status(404).json({ error: "Server not found" });
+    }
+
+    const channel = await getChannel(serverId as string, channelId as string);
+
+    if (!channel) {
+      return res.status(404).json({ error: "Channel not found" });
+    }
+
+    const member = server.members?.find((member) => member.user_id === user.id);
+
+    if (!member) {
+      return res.status(404).json({ error: "Member is not found" });
+    }
+
+    let message = await getSingleMessage(messageId as string, channelId as string);
+
+    if(!message || message.deleted){
+      return res.status(404).json({error: "Message not found"});
+    };
+
+    const isMessageOwner = message.member_id === member.id;
+    const isAdmin = member.role === MemberRole.ADMIN;
+    const isModerator = member.role === MemberRole.MODERATOR;
+    const canModify = isMessageOwner || isAdmin || isModerator;
+
+    if(!canModify){
+      return res.status(401).json({error: "Unauthorized"});
+    }
+
+    if(req.method === "PATCH"){
+      if(!isMessageOwner){
+        return res.status(401).json({error: "Unauthorized"});
+      }
+
+      await editMessage(content, messageId, channelId as string);
+    }
+
+    if(req.method === "DELETE"){
+      await deleteMessage(messageId, channelId as string)
+    }
+
+    message = await getSingleMessage(messageId as string, channelId as string);
+
+    const updateKey = `chat:${channelId}:messages:update`;
+
+    res?.socket?.emit(updateKey, message);;
+
+    return res.status(200).json(message);
   } catch (err) {
     console.log("[MESSAGE_ID_EDIT]", err);
     return res.status(500).json({ message: "Internal error" });
   }
 };
-
-export const deleteMessageRequest = async () => {};
