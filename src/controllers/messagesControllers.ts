@@ -100,10 +100,9 @@ export const sendMessageRequest = async (req: Request, res: Response) => {
 };
 
 export const editOrDeleteMessageRequest = async (req: Request, res: Response) => {
-  console.log(req.method)
   try {
     const token = req.headers.authorization?.split(" ")[1];
-
+    
     if (!token) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -163,6 +162,7 @@ export const editOrDeleteMessageRequest = async (req: Request, res: Response) =>
     }
 
     if(req.method === "DELETE"){
+      console.log("hello")
       await deleteMessage(messageId, channelId as string)
     }
 
