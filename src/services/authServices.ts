@@ -1,3 +1,7 @@
+import { Request, Response } from "express";
+
+
+
 export function getJwtSecretKey() {
 	const secret = process.env.JWT_SECRET;
 

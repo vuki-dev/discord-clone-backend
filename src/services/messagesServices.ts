@@ -1,4 +1,7 @@
 import db from "../db/dbConfig";
+import { MemberType } from "../utils/types";
+import { getMember } from "./membersServices";
+import { RowDataPacket } from "mysql2";
 
 export const sendMessage = async (
   content: string,
@@ -30,11 +33,22 @@ export const getMessages = async (cursor: string, channelId: string, MESSAGES_BA
     const values = cursor ? [channelId, cursor, MESSAGES_BATCH] : [channelId, MESSAGES_BATCH];
 
     return await new Promise((res, rej)=>{
-        db.query(query, values, (err, result) => {
+        db.query(query, values, async (err, result) => {
             if(err){
                 rej(err)
             } else {
-                res(JSON.parse(JSON.stringify(result)))
+                const messages = result as RowDataPacket[];
+
+                // Use Promise.all to wait for all member fetches
+                const processedResult = await Promise.all(messages.map(async (message: any) => {
+                    const member = await getMember(message.member_id) as MemberType;
+                    return {
+                        ...message,
+                        member
+                    };
+                }));
+
+                res(JSON.parse(JSON.stringify(processedResult)));
             }
         })
     })
