@@ -4,15 +4,16 @@ import { getMember } from "./membersServices";
 import { RowDataPacket } from "mysql2";
 
 export const sendMessage = async (
+  messageId: string,
   content: string,
   fileUrl: string,
   channelId: string,
   memberId: string
 ) => {
-  const messageQuery = `INSERT INTO messages (content, file_url, channel_id, member_id) VALUES (?, ?, ?, ?)`;
+  const messageQuery = `INSERT INTO messages (id, content, file_url, channel_id, member_id) VALUES (?, ?, ?, ?, ?)`;
 
   return await new Promise((res, rej) => {
-    db.query(messageQuery, [content, fileUrl, channelId, memberId], (err, result) => {
+    db.query(messageQuery, [messageId, content, fileUrl, channelId, memberId], (err, result) => {
         if(err) {
             rej(err)
         } else {
@@ -30,6 +31,7 @@ export const getMessages = async (cursor: string, channelId: string, MESSAGES_BA
     ORDER BY messages.created_at DESC
     LIMIT ? ${cursor ? "OFFSET 1" : ""}
     `
+
     const values = cursor ? [channelId, cursor, MESSAGES_BATCH] : [channelId, MESSAGES_BATCH];
 
     return await new Promise((res, rej)=>{

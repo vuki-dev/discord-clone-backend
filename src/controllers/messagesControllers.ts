@@ -4,6 +4,7 @@ import { getServerWithMembers } from "../services/serverServices";
 import { getChannel } from "../services/channelServices";
 import { deleteMessage, editMessage, getMessages, getSingleMessage, sendMessage } from "../services/messagesServices";
 import { MemberRole } from "../utils/types";
+import { v4 as uuidv4 } from 'uuid';
 
 const MESSAGES_BATCH = 10;
 
@@ -81,16 +82,21 @@ export const sendMessageRequest = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Member is not found" });
     }
 
-    const message = await sendMessage(
+    const messageId = uuidv4(); // Generate a UUID for the message ID
+
+    await sendMessage(
+      messageId,
       content,
       fileUrl,
       channelId as string,
       member.id
     );
 
+    const message = await getSingleMessage(messageId, channelId as string);
+
     const channelKey = `chat:${channelId}:messages`;
 
-    res?.socket?.emit(channelKey, message);
+    res?.io?.emit(channelKey, message)
 
     return res.status(200).json(message);
   } catch (err) {
@@ -102,7 +108,7 @@ export const sendMessageRequest = async (req: Request, res: Response) => {
 export const editOrDeleteMessageRequest = async (req: Request, res: Response) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
-    
+
     if (!token) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -162,7 +168,6 @@ export const editOrDeleteMessageRequest = async (req: Request, res: Response) =>
     }
 
     if(req.method === "DELETE"){
-      console.log("hello")
       await deleteMessage(messageId, channelId as string)
     }
 
@@ -170,7 +175,7 @@ export const editOrDeleteMessageRequest = async (req: Request, res: Response) =>
 
     const updateKey = `chat:${channelId}:messages:update`;
 
-    res?.socket?.emit(updateKey, message);;
+    res?.io?.emit(updateKey, message);;
 
     return res.status(200).json(message);
   } catch (err) {

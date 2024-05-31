@@ -9,6 +9,14 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 
+declare global {
+  namespace Express {
+    interface Response {
+      io?: Server;
+    }
+  }
+}
+
 const app = express()
 const server = http.createServer(app);
 
@@ -24,6 +32,11 @@ const io = new Server(server, {
 });
 
 const port = process.env.PORT || 4000;
+
+app.use((req, res, next) => {
+  res.io = io;
+  next();
+});
 
 app.use('/api/messages', messageRouter);
 
