@@ -4,7 +4,7 @@ import { getServerWithMembers } from "../services/serverServices";
 import { getChannel } from "../services/channelServices";
 import { deleteMessage, editMessage, getMessages, getSingleMessage, sendMessage } from "../services/messagesServices";
 import { MemberRole } from "../utils/types";
-import { v4 as uuidv4 } from 'uuid';
+import { v1 as uuidv1 } from 'uuid';
 
 const MESSAGES_BATCH = 10;
 
@@ -27,11 +27,12 @@ export const getMessagesRequest = async (req: Request, res: Response) => {
     let messages: any = [];
 
     messages = await getMessages(cursor as string, channelId, MESSAGES_BATCH);
+    console.log(messages)
 
     let nextCursor = null;
 
     if (messages.length === MESSAGES_BATCH) {
-      nextCursor = messages[MESSAGES_BATCH - 1].id;
+      nextCursor = messages[MESSAGES_BATCH - 1].created_at;
     }
 
     return res.status(200).json({ items: messages, nextCursor });
@@ -82,7 +83,7 @@ export const sendMessageRequest = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Member is not found" });
     }
 
-    const messageId = uuidv4(); // Generate a UUID for the message ID
+    const messageId = uuidv1(); // Generate a UUID for the message ID
 
     await sendMessage(
       messageId,

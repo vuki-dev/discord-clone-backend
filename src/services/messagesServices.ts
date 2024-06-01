@@ -10,7 +10,7 @@ export const sendMessage = async (
   channelId: string,
   memberId: string
 ) => {
-  const messageQuery = `INSERT INTO messages (id, content, file_url, channel_id, member_id) VALUES (?, ?, ?, ?, ?)`;
+  const messageQuery = `INSERT INTO messages (cursor_id ,id, content, file_url, channel_id, member_id) VALUES (UUID(), ?, ?, ?, ?, ?)`;
 
   return await new Promise((res, rej) => {
     db.query(messageQuery, [messageId, content, fileUrl, channelId, memberId], (err, result) => {
@@ -24,12 +24,20 @@ export const sendMessage = async (
 };
 
 export const getMessages = async (cursor: string, channelId: string, MESSAGES_BATCH: number) => {
+    // const query = `SELECT messages.*
+    // FROM messages
+    // WHERE messages.channel_id = ?
+    // ${cursor ? "AND messages.id < ?" : ""}
+    // ORDER BY messages.created_at DESC
+    // LIMIT ? ${cursor ? "OFFSET 1" : ""}
+    // `
+
     const query = `SELECT messages.*
     FROM messages
     WHERE messages.channel_id = ?
-    ${cursor ? "AND messages.id < ?" : ""}
+    ${cursor ? "AND messages.created_at < ?" : ""}
     ORDER BY messages.created_at DESC
-    LIMIT ? ${cursor ? "OFFSET 1" : ""}
+    LIMIT ?
     `
 
     const values = cursor ? [channelId, cursor, MESSAGES_BATCH] : [channelId, MESSAGES_BATCH];
