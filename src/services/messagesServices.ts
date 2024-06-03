@@ -1,3 +1,4 @@
+import { format, parseISO } from "date-fns";
 import db from "../db/dbConfig";
 import { MemberType, MessageType } from "../utils/types";
 import { getMember } from "./membersServices";
@@ -10,7 +11,7 @@ export const sendMessage = async (
   channelId: string,
   memberId: string
 ) => {
-  const messageQuery = `INSERT INTO messages (cursor_id ,id, content, file_url, channel_id, member_id) VALUES (UUID(), ?, ?, ?, ?, ?)`;
+  const messageQuery = `INSERT INTO messages (id, content, file_url, channel_id, member_id) VALUES (?, ?, ?, ?, ?)`;
 
   return await new Promise((res, rej) => {
     db.query(messageQuery, [messageId, content, fileUrl, channelId, memberId], (err, result) => {
@@ -32,15 +33,17 @@ export const getMessages = async (cursor: string, channelId: string, MESSAGES_BA
     // LIMIT ? ${cursor ? "OFFSET 1" : ""}
     // `
 
+    const formattedCursor = cursor ? format(parseISO(cursor), 'yyyy-MM-dd HH:mm:ss') : "";
+
     const query = `SELECT messages.*
     FROM messages
     WHERE messages.channel_id = ?
-    ${cursor ? "AND messages.created_at < ?" : ""}
+    ${cursor ? "AND UNIX_TIMESTAMP(messages.created_at) < UNIX_TIMESTAMP(?)" : ""}
     ORDER BY messages.created_at DESC
     LIMIT ?
     `
 
-    const values = cursor ? [channelId, cursor, MESSAGES_BATCH] : [channelId, MESSAGES_BATCH];
+    const values = cursor ? [channelId, formattedCursor, MESSAGES_BATCH] : [channelId, MESSAGES_BATCH];
 
     return await new Promise((res, rej)=>{
         db.query(query, values, async (err, result) => {
