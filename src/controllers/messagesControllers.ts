@@ -27,7 +27,6 @@ export const getMessagesRequest = async (req: Request, res: Response) => {
     let messages: any = [];
 
     messages = await getMessages(cursor as string, channelId, MESSAGES_BATCH);
-    console.log(messages)
 
     let nextCursor = null;
 
