@@ -9,6 +9,7 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import { directMessagesRouter } from "./routes/directMessagesRoutes";
+import { userRouter } from "./routes/userRoutes";
 
 declare global {
   namespace Express {
@@ -41,6 +42,8 @@ app.use((req, res, next) => {
 
 app.use('/api/messages', messageRouter);
 app.use('/api/direct-messages', directMessagesRouter);
+app.use('/api/users', userRouter);
+
 
 io.on('connection', (socket: any) => {
   console.log("a user connected");
