@@ -8,13 +8,13 @@ export const sendDirectMessage = async (
   messageId: string,
   content: string,
   fileUrl: string,
-  channelId: string,
+  conversationId: string,
   memberId: string
 ) => {
-  const messageQuery = `INSERT INTO messages (id, content, file_url, channel_id, member_id) VALUES (?, ?, ?, ?, ?)`;
+  const messageQuery = `INSERT INTO direct_messages (id, content, file_url, conversation_id, member_id) VALUES (?, ?, ?, ?, ?)`;
 
   return await new Promise((res, rej) => {
-    db.query(messageQuery, [messageId, content, fileUrl, channelId, memberId], (err, result) => {
+    db.query(messageQuery, [messageId, content, fileUrl, conversationId, memberId], (err, result) => {
         if(err) {
             rej(err)
         } else {
@@ -24,10 +24,10 @@ export const sendDirectMessage = async (
   });
 };
 
-export const getDirectMessages = async (cursor: string, channelId: string, MESSAGES_BATCH: number) => {
+export const getDirectMessages = async (cursor: string, conversationId: string, MESSAGES_BATCH: number) => {
     // const query = `SELECT messages.*
     // FROM messages
-    // WHERE messages.channel_id = ?
+    // WHERE messages.conversation_id = ?
     // ${cursor ? "AND messages.id < ?" : ""}
     // ORDER BY messages.created_at DESC
     // LIMIT ? ${cursor ? "OFFSET 1" : ""}
@@ -35,15 +35,15 @@ export const getDirectMessages = async (cursor: string, channelId: string, MESSA
 
     const formattedCursor = cursor ? format(parseISO(cursor), 'yyyy-MM-dd HH:mm:ss') : "";
 
-    const query = `SELECT messages.*
-    FROM messages
-    WHERE messages.channel_id = ?
-    ${cursor ? "AND UNIX_TIMESTAMP(messages.created_at) < UNIX_TIMESTAMP(?)" : ""}
-    ORDER BY messages.created_at DESC
+    const query = `SELECT direct_messages.*
+    FROM direct_messages
+    WHERE direct_messages.conversation_id = ?
+    ${cursor ? "AND UNIX_TIMESTAMP(direct_messages.created_at) < UNIX_TIMESTAMP(?)" : ""}
+    ORDER BY direct_messages.created_at DESC
     LIMIT ?
     `
 
-    const values = cursor ? [channelId, formattedCursor, MESSAGES_BATCH] : [channelId, MESSAGES_BATCH];
+    const values = cursor ? [conversationId, formattedCursor, MESSAGES_BATCH] : [conversationId, MESSAGES_BATCH];
 
     return await new Promise((res, rej)=>{
         db.query(query, values, async (err, result) => {
@@ -69,13 +69,13 @@ export const getDirectMessages = async (cursor: string, channelId: string, MESSA
 }
 
 
-export const getSingleDirectMessage = async (messageId: string, channelId: string) => {
-    const query = `SELECT messages.*
-    FROM messages
-    WHERE messages.id = ? AND messages.channel_id = ?`
+export const getSingleDirectMessage = async (messageId: string, conversationId: string) => {
+    const query = `SELECT direct_messages.*
+    FROM direct_messages
+    WHERE direct_messages.id = ? AND direct_messages.conversation_id = ?`
 
     const message: MessageType = await new Promise((res, rej)=>{
-        db.query<MessageType[] & RowDataPacket[]>(query, [messageId, channelId], async (err, result) => {
+        db.query<MessageType[] & RowDataPacket[]>(query, [messageId, conversationId], async (err, result) => {
             if(err){
                 rej(err)
             } else {
@@ -93,13 +93,13 @@ export const getSingleDirectMessage = async (messageId: string, channelId: strin
     return message;
 }   
 
-export const editDirectMessage = async (content: string, messageId: string, channelId: string) => {
-    const query = `UPDATE messages
+export const editDirectMessage = async (content: string, messageId: string, conversationId: string) => {
+    const query = `UPDATE direct_messages
     SET content = ?
-    WHERE id = ? AND channel_id = ?`;
+    WHERE id = ? AND conversation_id = ?`;
 
     return await new Promise((res, rej)=>{
-        db.query(query, [content, messageId, channelId], (err, result) => {
+        db.query(query, [content, messageId, conversationId], (err, result) => {
             if(err){
                 rej(err);
             } else {
@@ -109,13 +109,13 @@ export const editDirectMessage = async (content: string, messageId: string, chan
     })
 }
 
-export const deleteDirectMessage = async (messageId: string, channelId: string) => {
-    const query = `UPDATE messages
+export const deleteDirectMessage = async (messageId: string, conversationId: string) => {
+    const query = `UPDATE direct_messages
     SET content = 'This message has been deleted', file_url = NULL, deleted = 1
-    WHERE id = ? AND channel_id = ?`;
+    WHERE id = ? AND conversation_id = ?`;
 
     return await new Promise((res, rej)=>{
-        db.query(query, [messageId, channelId], (err, result) => {
+        db.query(query, [messageId, conversationId], (err, result) => {
             if(err){
                 rej(err);
             } else {

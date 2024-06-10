@@ -55,10 +55,10 @@ export enum ChannelInteractionType {
 
 export interface ConversationType {
   id: string;
-  memberOneId: string;
-  memberTwoId: string;
-  memberOne: UserType;
-  memberTwo: UserType;
+  member_one_id: string;
+  member_two_id: string;
+  memberOne: MemberType;
+  memberTwo: MemberType;
 }
 
 export interface MessageType {
