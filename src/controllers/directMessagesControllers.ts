@@ -1,20 +1,11 @@
 import { Response, Request } from "express";
 import { getCurrentUser } from "../controllers/userControllers";
-import { getServerWithMembers } from "../services/serverServices";
-import { getChannel } from "../services/channelServices";
-import {
-  deleteMessage,
-  editMessage,
-  getMessages,
-  getSingleMessage,
-  sendMessage,
-} from "../services/messagesServices";
 import { MemberRole } from "../utils/types";
 import { v1 as uuidv1 } from "uuid";
 import { getConversation } from "../services/conversationServices";
 import {
-    deleteDirectMessage,
-    editDirectMessage,
+  deleteDirectMessage,
+  editDirectMessage,
   getDirectMessages,
   getSingleDirectMessage,
   sendDirectMessage,
@@ -142,7 +133,10 @@ export const editOrDeleteDirectMessageRequest = async (
       return res.status(400).json({ error: "Conversation ID is missing" });
     }
 
-    const conversation = await getConversation(conversationId as string, user.id);
+    const conversation = await getConversation(
+      conversationId as string,
+      user.id
+    );
 
     const member =
       conversation.memberOne.user_id === user.id
@@ -183,7 +177,10 @@ export const editOrDeleteDirectMessageRequest = async (
       await deleteDirectMessage(messageId, conversationId as string);
     }
 
-    message = await getSingleDirectMessage(messageId as string, conversationId as string);
+    message = await getSingleDirectMessage(
+      messageId as string,
+      conversationId as string
+    );
 
     const updateKey = `chat:${conversationId}:messages:update`;
 

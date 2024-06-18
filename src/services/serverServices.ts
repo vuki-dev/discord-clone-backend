@@ -1,5 +1,5 @@
 import { RowDataPacket } from "mysql2";
-import db from "../db/dbConfig";
+import db, { executeQuery } from "../db/dbConfig";
 import { MemberType, ServerType } from "../utils/types";
 
 export const getServerWithMembers = async (
@@ -12,15 +12,7 @@ export const getServerWithMembers = async (
     WHERE servers.id = ? AND members.server_id = ? AND members.user_id = ?
     LIMIT 1`;
 
-  const server = await new Promise<ServerType | null>((res, rej) => {
-    db.query<ServerType[] & RowDataPacket[]>(serverQuery, [serverId, serverId, userId], (err, result) => {
-      if (err) {
-        rej(err);
-      } else {
-        res(result.length ? JSON.parse(JSON.stringify(result[0])) : null)
-      }
-    });
-  });
+  const server = (await executeQuery(serverQuery, [serverId, serverId, userId]) as RowDataPacket[])[0] as ServerType;  
 
   if(!server){
     return null
@@ -28,15 +20,8 @@ export const getServerWithMembers = async (
 
   const getMembersQuery = `SELECT * FROM members WHERE members.server_id = ?`;
   
-  const members: MemberType[] = await new Promise((res, rej) => {
-    db.query(getMembersQuery, [serverId], (err, result) => {
-      if (err) {
-        rej(err);
-      } else {
-        res(JSON.parse(JSON.stringify(result)))
-      }
-    });
-  });
+  const membersResult = await executeQuery(getMembersQuery, [serverId]) as RowDataPacket[];
+  const members = membersResult as MemberType[];
 
   server.members = members;
   return server;

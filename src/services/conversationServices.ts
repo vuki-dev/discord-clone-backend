@@ -1,6 +1,6 @@
 import { RowDataPacket } from "mysql2";
-import db from "../db/dbConfig";
-import { ConversationType, MemberType } from "../utils/types";
+import { executeQuery } from "../db/dbConfig";
+import { MemberType } from "../utils/types";
 import { getMember } from "./membersServices";
 
 export const getConversation = async (
@@ -20,15 +20,7 @@ export const getConversation = async (
             OR members.id = conversations.member_two_id
         )`;
 
-  const conversation: ConversationType = await new Promise((res, rej) => {
-    db.query<ConversationType[] & RowDataPacket[]>(query, [conversationId, userId], (err, result) => {
-      if (err) {
-        rej(err);
-      } else {
-        res(JSON.parse(JSON.stringify(result[0])));
-      }
-    });
-  });
+  const conversation = (await executeQuery(query, [conversationId, userId]) as RowDataPacket[])[0];
 
   conversation.memberOne = await getMember(conversation.member_one_id) as MemberType;
   conversation.memberTwo = await getMember(conversation.member_two_id) as MemberType;
